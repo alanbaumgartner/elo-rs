@@ -1,0 +1,7 @@
+[package]
+name = "polyelo"
+version = "0.1.0"
+authors = ["Alan Baumgartner <alanvbaumgartner@gmail.com>"]
+edition = "2018"
+
+[dependencies]
