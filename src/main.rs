@@ -4,13 +4,29 @@ mod elo {
     pub struct League {
         pub players: HashMap<u128, Player>,
         pub games: HashMap<u128, Game>,
-        start_elo: u16,
-        n_val: f32,
+        pub start_elo: u16,
+        pub n_val: f32,
+        pub k_val: f32,
+        pub k_reduction: Fn(u16, f32) -> f32,
+    }
+
+    impl Default for League {
+        fn default() -> Self {
+
+            fn k_reduction (x: u16, y: f32) -> f32 {
+                match x {
+                    0 ... 30 => y,
+                    _ => y / 2 as f32,
+                }
+            };
+
+            Self{start_elo: 1000, n_val: 400 as f32, k_val: 40 as f32, k_reduction: &k_reduction, players: HashMap::new(), games: HashMap::new()}
+        }
     }
 
     impl League {
         pub fn new() -> League {
-            League{start_elo: 1000, n_val: 200 as f32, players: HashMap::new(), games: HashMap::new()}
+            League{start_elo: 1000, n_val: 400 as f32, k_val: 40 as f32, k_reduction: 30, players: HashMap::new(), games: HashMap::new()}
         }
         pub fn start_elo(mut self, val: u16) -> League {
             self.start_elo = val;
@@ -48,7 +64,7 @@ mod elo {
             self.rating
         }
 
-        pub fn update_rating(&mut self, other: u16, n_val: f32, won: bool) {
+        pub fn update_rating(&mut self, other: u16, n_val: f32, k_val: f32, won: bool) {
             let ra = self.rating as f32;
             let rb =  other as f32;
             let x = ra - rb;
@@ -57,8 +73,8 @@ mod elo {
             let expected = 1 as f32 / (1 as f32 + (10 as f32).powf(exponent));
 
             let k = match self.total_games() {
-                0 ... 30 => 20,
-                _ => 10,
+                0 ... 30 => k_val,
+                _ => k_val / 2 as f32,
             } as f32;
 
             if won {
@@ -86,9 +102,9 @@ mod elo {
 use elo::League;
 
 fn main() {
-    let mut league = League::new().start_elo(1000).n_val(400 as f32);
+    let mut league = League{..Default::default()};
     let mut a = elo::Player{id: 1, rating: 1000, wins : 0, losses: 0};
-    a.update_rating(1000, 200 as f32, true);
+    a.update_rating(1000, 400 as f32, 40 as f32, true);
     let mut b = elo::Player{id: 2, rating: 1300, wins : 0, losses: 0};
     // league.players.insert(1, a);
     // league.players.insert(1, b);
