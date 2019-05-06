@@ -1,5 +1,31 @@
 mod elo {
+    use std::collections::HashMap;
+
+    pub struct League {
+        pub players: HashMap<u128, Player>,
+        pub games: HashMap<u128, Game>,
+        pub start_elo: u16,
+        pub n_val: f32,
+    }
+
+    impl League {
+        pub fn new() -> League {
+            League{start_elo: 1000, n_val: 400 as f32, players: HashMap::new(), games: HashMap::new()}
+        }
+        pub fn start_elo(mut self, val: u16) -> League {
+            self.start_elo = val;
+            self
+        }
+        pub fn n_val(mut self, val: f32) -> League {
+            self.n_val = val;
+            self
+        }
+    }
+    
+
+
     pub struct Player {
+        pub id: u128,
         pub rating: u16,
         pub wins: u16,
         pub losses: u16,
@@ -22,20 +48,34 @@ mod elo {
             self.rating
         }
 
-        pub fn update_rating(&mut self, other: u16) {
-            let ra = self.rating as f64;
-            let rb =  other as f64;
-            let probability = (10 as f64).powf(1.0 * (ra - rb) / 400 as f64);
-            // self.rating = (1.0 * (1.0 / (1 as f64 + 1.0 * ten.powf(1.0 * (ra - rb) / 400 as f64) as f64))) as u16;
-            self.rating = 0;
+        pub fn update_rating(&mut self, other: u16, n_val: f32, won: bool) {
+            let ra = self.rating as f32;
+            let rb =  other as f32;
+            let x = ra - rb;
+            let exponent = -(x / n_val);
+
+            let expected = 1 as f32 / (1 as f32 + (10 as f32).powf(exponent));
+
+            let k = match self.total_games() {
+                1 ... 30 => 32,
+                _ => 16,
+            } as f32;
+
+            if won {
+                self.rating = (ra + (k * (1 as f32 - expected))) as u16;
+            } else {
+                self.rating = (ra + (k * (0 as f32 - expected))) as u16;
+            }
         }
     }
 
-    struct Game {
-        team_one: Vec<Player>,
-        team_two: Vec<Player>,
-        started: bool,
-        finished: bool,
+    pub struct Game {
+        player_one: Player,
+        player_two: Player,
+        // team_one: Vec<Player>,
+        // team_two: Vec<Player>,
+        // started: bool,
+        // finished: bool,
     }
 
     impl Game {
@@ -43,9 +83,16 @@ mod elo {
     }
 }
 
+use elo::League;
+
 fn main() {
-    let mut a = elo::Player{rating: 1200, wins : 5, losses: 5};
-    a.update_rating(1200);
-    let b = a.rating();
-    println!("{}", b);
+    let mut league = League::new().start_elo(1000).n_val(400 as f32);
+    let mut a = elo::Player{id: 1, rating: 1200, wins : 0, losses: 0};
+    let mut b = elo::Player{id: 2, rating: 1300, wins : 0, losses: 0};
+    // league.players.insert(1, a);
+    // league.players.insert(1, b);
+    // league.NewGame(1, 2);
+    // a.update_rating(3000,true);
+    // let b = a.rating();
+    // println!("{}", b);
 }
