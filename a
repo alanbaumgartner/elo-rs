@@ -1,9 +1,12 @@
 mod elo {
-    use std::collections::HashMap;
-    
+
+    pub enum Result {
+        Win,
+        Loss,
+        Draw,
+    }
+
     pub struct League {
-        pub players: HashMap<u128, Player>,
-        // pub games: HashMap<u128, Game>,
         pub start_elo: u16,
         pub n_val: f32,
         pub k_val: f32,
@@ -14,7 +17,7 @@ mod elo {
         fn default() -> Self {
             fn k_reduction(x: u16, y: f32) -> f32 {
                 match x {
-                    0...30 => y,
+                    0..=30 => y,
                     _ => y / 2 as f32,
                 }
             }
@@ -23,8 +26,7 @@ mod elo {
                 n_val: 400 as f32,
                 k_val: 40 as f32,
                 k_reduction: k_reduction,
-                players: HashMap::new(),
-            } //, games: HashMap::new()}
+            }
         }
     }
 
@@ -35,43 +37,8 @@ mod elo {
             }
         }
 
-        pub fn add_player(&mut self, new_player: Player) {
-            self.players.insert(new_player.id, new_player);
-        }
+        pub fn update_players(&mut self, teams: Vec<Vec<Player>>) {
 
-        pub fn get_player_rating(&self, id: u128) -> u16 {
-            self.players.get(&id).unwrap().rating
-        }
-
-        pub fn update_players(&mut self, id_one: u128, id_two: u128, winner: bool) {
-            let rating_one = match self.players.get(&id_one) {
-                Some(player) => player.rating,
-                None => 0,
-            };
-
-            let rating_two = match self.players.get(&id_two) {
-                Some(player) => player.rating,
-                None => 0,
-            };
-
-            if rating_one < 100 || rating_two < 100 {
-                println!("One or more players not found!");
-            } else {
-                self.players.get_mut(&id_one).unwrap().update_rating(
-                    rating_two,
-                    self.n_val,
-                    self.k_val,
-                    self.k_reduction,
-                    winner,
-                );
-                self.players.get_mut(&id_two).unwrap().update_rating(
-                    rating_one,
-                    self.n_val,
-                    self.k_val,
-                    self.k_reduction,
-                    !winner,
-                );
-            }
         }
     }
 
@@ -129,7 +96,7 @@ use elo::League;
 fn main() {
     fn k_reduction(x: u16, y: f32) -> f32 {
         match x {
-            0...30 => y,
+            0..=30 => y,
             _ => y / 2 as f32,
         }
     }
